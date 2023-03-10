@@ -25,6 +25,8 @@ void mf3_times_vector(const mf3 *M, const f3_vector *v, f3_vector *res);
 
 int mf3_gauss_elim(mf3 *M, unsigned int *support);
 
+int mf3_gauss_elim_single(mf3 *M, size_t r, size_t j);
+
 void mf3_print(mf3 *M);
 
 mf3* mf3_copy(mf3 *M);
