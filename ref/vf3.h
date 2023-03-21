@@ -48,6 +48,9 @@ void f3_vector_mul(const f3_vector *x, const f3_vector *y, f3_vector *res);
 
 void f3_vector_rand(f3_vector *a, prng_t *PRNG);
 
+// Added for debugging
+void f2_vector_setcoeff(f3_vector *x, size_t j, uint8_t a);
+
 void f3_vector_set_from_array(f3_vector *x, const uint8_t *v,
 		const size_t length);
 
@@ -58,6 +61,14 @@ static inline void f3_vector_sum_inplace(f3_vector *a, const f3_vector *b) {
 		tmp = (a->r0[i] ^ b->r1[i]) & (a->r1[i] ^ b->r0[i]);
 		a->r0[i] = (a->r0[i] ^ b->r0[i]) | ((a->r1[i] ^ b->r0[i]) ^ b->r1[i]);
 		a->r1[i] = tmp;
+	}
+}
+
+// Added for debugging (expects F2 datatypes and emulates sum in place over F2)
+static inline void f2_vector_sum_inplace(f3_vector *a, const f3_vector *b) {
+	wave_word tmp = 0;
+	for (size_t i = 0; i < a->alloc; i++) {
+		a->r0[i] = a->r0[i] ^ b->r0[i];
 	}
 }
 
@@ -80,6 +91,16 @@ static inline void f3_vector_add(const f3_vector *a, const f3_vector *b,
 		c->r0[i] = (a->r0[i] ^ b->r0[i]) | (tmp ^ b->r1[i]);
 	}
 }
+
+// Added for debugging (expects F2 datatypes and emulates sum in place over F2)
+static inline void f2_vector_add(const f3_vector *a, const f3_vector *b,
+		f3_vector *c) {
+	for (size_t i = 0; i < a->alloc; i++) {
+		c->r0[i] = (a->r0[i] ^ b->r0[i]);
+		c->r1[i] = 0;
+	}
+}
+
 static inline void f3_vector_neg_vector(const f3_vector *a, f3_vector *b) {
 	memcpy(b->r0, a->r0, a->alloc * sizeof(wave_word));
 	memcpy(b->r1, a->r1, a->alloc * sizeof(wave_word));

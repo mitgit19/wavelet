@@ -231,6 +231,24 @@ void f3_vector_setcoeff(f3_vector *x, size_t j, uint8_t a) {
 	}
 }
 
+// Added for debugging
+void f2_vector_setcoeff(f3_vector *x, size_t j, uint8_t a) {
+	size_t i;
+	i = j / WORD_LENGTH;
+	j %= WORD_LENGTH;
+	wave_word z = ((wave_word) 1) << j;
+	if (a == 1) {
+		x->r0[i] |= z;
+		x->r1[i] &= 0;
+	} else if (a == 2) {
+		x->r0[i] |= z;
+		x->r1[i] |= 0;
+	} else {
+		x->r0[i] &= ~z;
+		x->r1[i] &= 0;
+	}
+}
+
 void f3_vector_rand(f3_vector *a, prng_t *PRNG) {
 
 	for (size_t j = 0; j < a->size; j++) {

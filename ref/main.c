@@ -56,19 +56,88 @@ size_t m4r_opt_k(size_t n) {
 
 // Power 2^k (Considering that for now the implementation is for F2)
 size_t two_pow(size_t k) {
-  size_t res = 2 << k;
+   size_t res = 2 << (k-1);
   return res;
 }
 
 // MakeTable implementation
-void make_table(mf3 *A, size_t r_str, size_t c_str, size_t k, mf3 *T, size_t *L) {
-	// TODO
+void make_table(mf3 *A, size_t r_str, size_t c_str, size_t k, mf3 *T){
+
+	// TODO: Replace the hardcoded section with separate function
+	// Using the pre-processed "fundamental indexes" (the indexes correspond to T | start from 0) 
+	size_t I[k];
+	memset(I, 0, k * sizeof(size_t));
+
+	I[0] = 1;
+	I[1] = 2;
+	I[2] = 4;
+	I[3] = 8;
+	I[4] = 16;
+	I[5] = 32;
+	I[6] = 64;
+	I[7] = 128;
+	I[8] = 256;
+	I[9] = 512;
+	I[10] = 1024;
+	I[11] = 2048;
+
+	// Setting the first two rows of T after the 0th one
+	T->row[1] = A->row[r_str + (k - 1)];
+
+	// Added to ensure that we can work with 1 pivot
+	if (k > 1) {
+		T->row[2] = A->row[r_str + (k - 2)];
+	}
+
+	// TODO: Replace the hardcoded section with separate function
+	// Indicator used for keeping track with the upcoming fundamental index
+	size_t i = 2;
+
+	// Storing the last fundamental row (to avoid multiple indexing)
+	f3_vector fund_row = T->row[2];
+
+	// Storing the number of rows in the prior to the fundamental that will be useful ([0..(I[i]-1)] rule)
+	size_t dep_i = 1; // For I[i] = 2 that will be 1
+
+	// Creating T based on 2^k additions (considering min k = 1)
+	for (size_t j = 3; j < two_pow(k); j++) {
+
+		// If we are on a fundamental index -> increment by one the indicator
+		if (j == I[i]) {
+			T->row[j] = A->row[r_str + (k - i - 1)];
+			fund_row = T->row[I[i]];
+			dep_i = j-1;
+
+			// Ensuring that we won't go out of bounds
+			if ((k - 1) > i) {
+				i++;
+			}
+		}
+
+		else {
+			// j increments by one but dep_i remains constant thus we effectively start from the row that is dep_row rows above the last fundamental row and move downwards until the row prior to the fundamental itself
+			f2_vector_add(&T->row[j - dep_i - 1],&fund_row,&T->row[j]);
+		}
+	}
 }
 
 // AddRowsFromTable implementation
-void add_rows_from_table(mf3 *A, size_t r_str, size_t r_end, size_t c_str, size_t k, mf3 *T, size_t *L) {
-	// TODO
+void add_rows_from_table(mf3 *A, size_t r_str, size_t r_end, size_t c_str, size_t k, mf3 *T) {
+	
+	// Within the set region of rows
+	for (size_t r = r_str; r < r_end; r++) {
+		size_t index = 0;
+
+		// For the first k columns starting from c_str
+		for (size_t j = 0; j < k; j++) {
+			index = index + (f3_vector_get_coeff(&A->row[r], c_str + j) << (k - j - 1));
+		}
+
+		// Adding the row of T corresponding to the previous index value to the row r of A
+		f2_vector_sum_inplace(&A->row[r], &T->row[index]);
+	}
 }
+
 
 /* Adding M4RI implementation
 Input: A - mxn matrix.
@@ -87,7 +156,9 @@ void m4r_impl(mf3 *A){
 	size_t n = A->n_cols;
 
 	// Finding k based on n_columns (since n>m)
-	size_t k = m4r_opt_k(m);
+	//size_t k = m4r_opt_k(m);
+	
+	size_t k = 4;
 
 	while(c < n) {
 
@@ -97,7 +168,16 @@ void m4r_impl(mf3 *A){
 		}
 
 		// Computing GaussSubmatrix
-		size_t k_bar = mf3_gauss_elim_single(A, r, c);
+		size_t k_bar = f2_m4r_mf3_gauss_elim(A, k, r, c);
+
+		// TODO: Remove - Used for debugging
+		// printf("Pivots: %d\n", k_bar);
+		// printf("Position r: %d\n", r);
+		// printf("Position c: %d\n", c);
+
+		// TODO: Remove - Used for debugging
+		// printf("Eliminated A: \n");
+		// mf3_print(A);
 
 		// If pivots found
 		if (k_bar > 0) {
@@ -109,23 +189,36 @@ void m4r_impl(mf3 *A){
 			mf3* T = mf3_new(two_pow_k, n);
 
 			// Creating integer array L (size 2^k)
-			size_t L[two_pow_k];
-			memset(L, 0, two_pow_k * sizeof(size_t));
+		//	size_t L[two_pow_k];
+		//	memset(L, 0, two_pow_k * sizeof(size_t));
 
 			// Making the table with all the linear combs for 2^k
-			make_table(A,r,c,k_bar,T,L);
+			make_table(A,r,c,k_bar,T);
+
+			// TODO: Remove - Used for debugging
+			// printf("Creating the table T: \n");
+			// mf3_print(T);
 			
 			// Adding the rows from the table
-			add_rows_from_table(A,0,r,c,k_bar,T,L);
-			add_rows_from_table(A,r+k_bar,m,c,k_bar,T,L);
+			add_rows_from_table(A,0,r,c,k_bar,T);
+			add_rows_from_table(A,r+k_bar,m,c,k_bar,T);
 		}
+
+		// TODO: Remove - Used for debugging
+		// printf("Added rows A: \n");
+		// mf3_print(A);
+
 
 		// Updating r,c
 		r += k_bar;
 		c += k_bar;
 
-		if (k != k_bar) {
-			c += 1;
+		// if (k != k_bar) { // I believe this step is wrongly typed in the M4R algorithm (I saw the GitHub repo has also removed it)
+		// 	c += 1;
+		// }
+
+		if (k_bar == 0){
+			c +=1;
 		}
 	}
 }
@@ -136,6 +229,56 @@ void m4r_impl(mf3 *A){
 int main(void) {
 
 	init(PARAMS_ID);
+
+	printf("------\t Testing region for M4R.\t--------\n");
+
+	// Generating random matrices
+	prng_t *PRNG;
+	PRNG = prng_init(2);
+	mf3* H1 = f2_mf3_rand(10, 10, PRNG);
+	mf3* H2 = mf3_copy(H1);
+
+	// Visualizing the random matrix
+	// mf3_print(H1);
+
+	// printf("%d\n", H1->n_rows);
+	// printf("%d\n", H1->n_cols);
+
+	// Timing the original Gaussian Elimination
+
+	// Creating the support vector
+	unsigned int support[10] = { 0 };
+	for (int i = 0; i < 10; ++i)
+		support[i] = i;
+
+	clock_t t1;
+    t1 = clock();
+
+	size_t piv_tried = f2_mf3_gauss_elim(H1,support);
+
+	t1 = clock() - t1;
+	double time_taken = ((double)t1)/CLOCKS_PER_SEC;
+	printf("The original Gaussian Elim took %f seconds to execute \n", time_taken);
+
+	// Visualizing the result obtained by the M4R gaussian elimination
+	mf3_print(H1);
+
+	// Timing the M4R Gaussian Elimination
+	clock_t t2;
+    t2 = clock();
+
+	m4r_impl(H2);
+	t2 = clock() - t2;
+	time_taken = ((double)t2)/CLOCKS_PER_SEC;
+	printf("The M4R Gaussian Elim took %f seconds to execute \n", time_taken);
+
+	// Visualizing the result obtained by the M4R gaussian elimination
+	mf3_print(H2);
+
+	// Testing the makeTable function
+	// mf3* T = mf3_new(two_pow(3), 10);
+	// make_table(H1,0,0,3,T);
+	// mf3_print(T);
 
 	printf("------\t Warming up.\t--------\n");
 
