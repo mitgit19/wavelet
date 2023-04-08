@@ -49,10 +49,10 @@ void bubbleSort(double arr[], int n) {
 // (WIP) - Temporary section (TODO: Create separate .c and corresponding .h files)
 
 // Deducing the optimal number for k
-size_t m4r_opt_k(size_t n) {
-  size_t k = log2(n);
-  return k;
-}
+//size_t m4r_opt_k(size_t n) {
+  //size_t k = log2(n);
+  //return k;
+//}
 
 // Power 2^k (Considering that for now the implementation is for F2)
 size_t two_pow(size_t k) {
@@ -105,7 +105,7 @@ void make_table(mf3 *A, size_t r_str, size_t c_str, size_t k, mf3 *T){
 		// If we are on a fundamental index -> increment by one the indicator
 		if (j == I[i]) {
 			T->row[j] = A->row[r_str + (k - i - 1)];
-			fund_row = T->row[I[i]];
+			fund_row = T->row[j];
 			dep_i = j-1;
 
 			// Ensuring that we won't go out of bounds
@@ -158,7 +158,7 @@ void m4r_impl(mf3 *A){
 	// Finding k based on n_columns (since n>m)
 	//size_t k = m4r_opt_k(m);
 	
-	size_t k = 4;
+	size_t k = 6;
 
 	while(c < n) {
 
@@ -235,7 +235,12 @@ int main(void) {
 	// Generating random matrices
 	prng_t *PRNG;
 	PRNG = prng_init(2);
-	mf3* H1 = f2_mf3_rand(10, 10, PRNG);
+	//const size_t mat_nu_rows = 2887;
+	//const size_t mat_nu_cols = 8492;
+	 const size_t mat_nu_rows = 13;
+	 const size_t mat_nu_cols = 17;
+
+	mf3* H1 = f2_mf3_rand(mat_nu_rows, mat_nu_cols, PRNG);
 	mf3* H2 = mf3_copy(H1);
 
 	// Visualizing the random matrix
@@ -247,8 +252,8 @@ int main(void) {
 	// Timing the original Gaussian Elimination
 
 	// Creating the support vector
-	unsigned int support[10] = { 0 };
-	for (int i = 0; i < 10; ++i)
+	unsigned int support[17] = { 0 };
+	for (int i = 0; i < mat_nu_cols; ++i)
 		support[i] = i;
 
 	clock_t t1;
@@ -260,8 +265,8 @@ int main(void) {
 	double time_taken = ((double)t1)/CLOCKS_PER_SEC;
 	printf("The original Gaussian Elim took %f seconds to execute \n", time_taken);
 
-	// Visualizing the result obtained by the M4R gaussian elimination
-	mf3_print(H1);
+	// Visualizing the result obtained by the original gaussian elimination
+	//mf3_print(H1);
 
 	// Timing the M4R Gaussian Elimination
 	clock_t t2;
@@ -273,7 +278,7 @@ int main(void) {
 	printf("The M4R Gaussian Elim took %f seconds to execute \n", time_taken);
 
 	// Visualizing the result obtained by the M4R gaussian elimination
-	mf3_print(H2);
+	//mf3_print(H2);
 
 	// Testing the makeTable function
 	// mf3* T = mf3_new(two_pow(3), 10);

@@ -162,13 +162,14 @@ int f2_mf3_gauss_elim_single_wind(mf3 *M, size_t r, size_t r_str, size_t k, size
 
 	for (i = r; i < M->n_rows; i++) {
 
-		// If the pivot cannot be found within the k rows region (improbable but still possible edge case for large k values)
+		// If at least 1 pivot has been found (from previous columns) and no pivot can be found within the region r_str+k return 0 
 		if  ((i >= (r_str + k)) && (j > c_str)) {
-			for (size_t l = r_str; l < r; l++) {
-				a = f3_vector_coeff(&M->row[i], l - r_str + c_str);
-				if (a == 1)
-					f2_vector_sum_inplace(&M->row[i], &M->row[l]);
-			}
+			//for (size_t l = r_str; l < r; l++) {
+			//	a = f3_vector_coeff(&M->row[i], l - r_str + c_str);
+			//	if (a == 1)
+			//		f2_vector_sum_inplace(&M->row[i], &M->row[l]);
+			//}
+			return 0;
 		}
 
 		a = f3_vector_coeff(&M->row[i], j);
@@ -187,7 +188,16 @@ int f2_mf3_gauss_elim_single_wind(mf3 *M, size_t r, size_t r_str, size_t k, size
 			M->row[i] = M->row[r];
 			M->row[r] = temp;
 
-			for (i = r_str; i < r_str + k; i++) {
+			size_t lower_bound;
+			if ((r_str + k) <= M->n_rows) {
+				lower_bound = r_str + k;
+			}
+			else {
+				lower_bound = M->n_rows;
+			}
+
+			for (i = r_str; i < lower_bound; i++) {
+				
 				if (i != r) {
 					a = f3_vector_coeff(&M->row[i], j);
 					if (a == 1)
