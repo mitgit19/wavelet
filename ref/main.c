@@ -65,8 +65,8 @@ void make_table(mf3 *A, size_t r_str, size_t c_str, size_t k, mf3 *T){
 
 	// TODO: Replace the hardcoded section with separate function
 	// Using the pre-processed "fundamental indexes" (the indexes correspond to T | start from 0) 
-	size_t I[k];
-	memset(I, 0, k * sizeof(size_t));
+	size_t I[12];
+	memset(I, 0, 12 * sizeof(size_t));
 
 	I[0] = 1;
 	I[1] = 2;
@@ -235,10 +235,10 @@ int main(void) {
 	// Generating random matrices
 	prng_t *PRNG;
 	PRNG = prng_init(2);
-	//const size_t mat_nu_rows = 2887;
-	//const size_t mat_nu_cols = 8492;
-	 const size_t mat_nu_rows = 13;
-	 const size_t mat_nu_cols = 17;
+	const size_t mat_nu_rows = 2887;
+	const size_t mat_nu_cols = 8492;
+	// const size_t mat_nu_rows = 13;
+	// const size_t mat_nu_cols = 17;
 
 	mf3* H1 = f2_mf3_rand(mat_nu_rows, mat_nu_cols, PRNG);
 	mf3* H2 = mf3_copy(H1);
@@ -252,7 +252,7 @@ int main(void) {
 	// Timing the original Gaussian Elimination
 
 	// Creating the support vector
-	unsigned int support[17] = { 0 };
+	unsigned int support[8492] = { 0 };
 	for (int i = 0; i < mat_nu_cols; ++i)
 		support[i] = i;
 
