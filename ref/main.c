@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <math.h>
+#include <stdbool.h>
 
 #include "cpucycles.h"
 #include "vf3.h"
@@ -53,6 +54,29 @@ void bubbleSort(double arr[], int n) {
   //size_t k = log2(n);
   //return k;
 //}
+
+bool mf3_are_equal(const mf3 *a, const mf3 *b) {
+
+	if ((a->n_cols != b->n_cols) || (a->n_rows != b->n_rows)) {
+		return false;
+	}
+
+	for (size_t k = 0; k < a->n_rows; k++) {
+
+		if ((a->row[k].size != b->row[k].size) || (a->row[k].alloc != b->row[k].alloc)) {
+			return false;
+		}
+		else {
+			for (size_t i = 0; i < a->row[k].alloc; i++) {
+				if  (a->row[k].r0[i] != b->row[k].r0[i] || a->row[k].r1[i] != b->row[k].r1[i]) {
+					return false;
+				}
+			}
+		}
+	}
+
+	return true;
+}
 
 // Power 2^k (Considering that for now the implementation is for F2)
 size_t two_pow(size_t k) {
@@ -116,7 +140,7 @@ void make_table(mf3 *A, size_t r_str, size_t c_str, size_t k, mf3 *T){
 
 		else {
 			// j increments by one but dep_i remains constant thus we effectively start from the row that is dep_row rows above the last fundamental row and move downwards until the row prior to the fundamental itself
-			f2_vector_add(&T->row[j - dep_i - 1],&fund_row,&T->row[j]);
+			f3_vector_add(&T->row[j - dep_i - 1],&fund_row,&T->row[j]);
 		}
 	}
 }
@@ -126,15 +150,34 @@ void add_rows_from_table(mf3 *A, size_t r_str, size_t r_end, size_t c_str, size_
 	
 	// Within the set region of rows
 	for (size_t r = r_str; r < r_end; r++) {
-		size_t index = 0;
+		size_t index_1 = 0;
+		size_t index_2 = 0;
+
+		bool contains_two = false;
 
 		// For the first k columns starting from c_str
 		for (size_t j = 0; j < k; j++) {
-			index = index + (f3_vector_get_coeff(&A->row[r], c_str + j) << (k - j - 1));
+
+			uint8_t coeff = f3_vector_get_coeff(&A->row[r], c_str + j);
+
+			// If the coefficient is 2
+			if (coeff == 2) {
+				contains_two = true;
+				coeff = 1;
+				index_2 = index_2 + (coeff << (k - j - 1));
+			}
+
+			index_1 = index_1 + (coeff << (k - j - 1));
 		}
 
-		// Adding the row of T corresponding to the previous index value to the row r of A
-		f2_vector_sum_inplace(&A->row[r], &T->row[index]);
+		// Adding the row of T corresponding to the previous index_1 value to the row r of A
+		if (contains_two) {
+			f3_vector_sub_inplace(&A->row[r], &T->row[index_1]);
+			f3_vector_sub_inplace(&A->row[r], &T->row[index_2]);
+		}
+		else {
+			f3_vector_sub_inplace(&A->row[r], &T->row[index_1]);
+		}
 	}
 }
 
@@ -168,16 +211,9 @@ void m4r_impl(mf3 *A){
 		}
 
 		// Computing GaussSubmatrix
-		size_t k_bar = f2_m4r_mf3_gauss_elim(A, k, r, c);
+		size_t k_bar = m4r_mf3_gauss_elim(A, k, r, c);
 
-		// TODO: Remove - Used for debugging
-		// printf("Pivots: %d\n", k_bar);
-		// printf("Position r: %d\n", r);
-		// printf("Position c: %d\n", c);
-
-		// TODO: Remove - Used for debugging
-		// printf("Eliminated A: \n");
-		// mf3_print(A);
+		
 
 		// If pivots found
 		if (k_bar > 0) {
@@ -188,16 +224,10 @@ void m4r_impl(mf3 *A){
 			// Creating table T (size 2^k x n)
 			mf3* T = mf3_new(two_pow_k, n);
 
-			// Creating integer array L (size 2^k)
-		//	size_t L[two_pow_k];
-		//	memset(L, 0, two_pow_k * sizeof(size_t));
-
+			
 			// Making the table with all the linear combs for 2^k
 			make_table(A,r,c,k_bar,T);
 
-			// TODO: Remove - Used for debugging
-			// printf("Creating the table T: \n");
-			// mf3_print(T);
 			
 			// Adding the rows from the table
 			add_rows_from_table(A,0,r,c,k_bar,T);
@@ -237,10 +267,10 @@ int main(void) {
 	PRNG = prng_init(2);
 	const size_t mat_nu_rows = 2887;
 	const size_t mat_nu_cols = 8492;
-	// const size_t mat_nu_rows = 13;
-	// const size_t mat_nu_cols = 17;
+	 //const size_t mat_nu_rows = 500;
+	 //const size_t mat_nu_cols = 500;
 
-	mf3* H1 = f2_mf3_rand(mat_nu_rows, mat_nu_cols, PRNG);
+	mf3* H1 = mf3_rand(mat_nu_rows, mat_nu_cols, PRNG);
 	mf3* H2 = mf3_copy(H1);
 
 	// Visualizing the random matrix
@@ -259,7 +289,7 @@ int main(void) {
 	clock_t t1;
     t1 = clock();
 
-	size_t piv_tried = f2_mf3_gauss_elim(H1,support);
+	size_t piv_tried = mf3_gauss_elim(H1,support);
 
 	t1 = clock() - t1;
 	double time_taken = ((double)t1)/CLOCKS_PER_SEC;
@@ -279,6 +309,9 @@ int main(void) {
 
 	// Visualizing the result obtained by the M4R gaussian elimination
 	//mf3_print(H2);
+
+	// Checking whether the results match
+	printf("The results obtained match: %s \n", mf3_are_equal(H1,H2) ? "true" : "false");
 
 	// Testing the makeTable function
 	// mf3* T = mf3_new(two_pow(3), 10);

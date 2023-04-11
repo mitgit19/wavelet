@@ -28,20 +28,15 @@ void mf3_times_vector(const mf3 *M, const f3_vector *v, f3_vector *res);
 
 int mf3_gauss_elim(mf3 *M, unsigned int *support);
 
-// Added for evaluating the performance with f2
-int f2_mf3_gauss_elim(mf3 *M, unsigned int *support);
 
 // Added for M4R (f2 for debugging)
-int f2_m4r_mf3_gauss_elim(mf3 *M, unsigned int k,  unsigned int r_str,  unsigned int c_str);
-
-// Added for M4R (f2 for debugging)
-int f2_mf3_gauss_elim_single_wind(mf3 *M, size_t r, size_t r_str, size_t k, size_t j, size_t c_str);
+int m4r_mf3_gauss_elim(mf3 *M, unsigned int k,  unsigned int r_str,  unsigned int c_str);
 
 // Added for evaluating the performance with f2
 int mf3_gauss_elim_single(mf3 *M, size_t r, size_t j);
 
 // Added for M4R (f2 for debugging)
-int f2_mf3_gauss_elim_single_wind(mf3 *M, size_t r, size_t r_str, size_t k, size_t j, size_t c_str);
+int mf3_gauss_elim_single_wind(mf3 *M, size_t r, size_t r_str, size_t k, size_t j, size_t c_str);
 
 void mf3_print(mf3 *M);
 

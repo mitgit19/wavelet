@@ -116,47 +116,11 @@ int mf3_gauss_elim_single(mf3 *M, size_t r, size_t j) {
 	return 0;
 }
 
-// Added for evaluating the performance with f2
-int f2_mf3_gauss_elim_single(mf3 *M, size_t r, size_t j) {
-	size_t i;
-	uint8_t a;
 
-	for (i = r; i < M->n_rows; i++) {
-		a = f3_vector_coeff(&M->row[i], j);
-		if (a != 0) {
-			if (a == 2) { // normalize row
-				// exchanging r0 and r1 multiplies the row by -1
-				f3_vector_neg(&M->row[i]);
-				/*wave_word *temp = M->row[i].r0;
-				 M->row[i].r0 = M->row[i].r1;
-				 M->row[i].r1 = temp;*/
-
-			}
-			
-			// swapping the two rows
-			f3_vector temp = M->row[i];
-			M->row[i] = M->row[r];
-			M->row[r] = temp;
-
-			for (i = 0; i < M->n_rows; i++) {
-				if (i != r) {
-					a = f3_vector_coeff(&M->row[i], j);
-					if (a == 1)
-						f2_vector_sum_inplace(&M->row[i], &M->row[r]);
-					else if (a == 2)
-						f3_vector_sum_inplace(&M->row[i], &M->row[r]);
-				}
-			}
-
-			return 1;
-		}
-	}
-	return 0;
-}
 
 
 // Added for M4R (f2 for debugging)
-int f2_mf3_gauss_elim_single_wind(mf3 *M, size_t r, size_t r_str, size_t k, size_t j, size_t c_str) {
+int mf3_gauss_elim_single_wind(mf3 *M, size_t r, size_t r_str, size_t k, size_t j, size_t c_str) {
 	size_t i;
 	uint8_t a;
 
@@ -197,11 +161,11 @@ int f2_mf3_gauss_elim_single_wind(mf3 *M, size_t r, size_t r_str, size_t k, size
 			}
 
 			for (i = r_str; i < lower_bound; i++) {
-				
+
 				if (i != r) {
 					a = f3_vector_coeff(&M->row[i], j);
 					if (a == 1)
-						f2_vector_sum_inplace(&M->row[i], &M->row[r]);
+						f3_vector_sub_inplace(&M->row[i], &M->row[r]);
 					else if (a == 2)
 						f3_vector_sum_inplace(&M->row[i], &M->row[r]);
 				}
@@ -246,31 +210,10 @@ int mf3_gauss_elim(mf3 *M, unsigned int *support) {
 	return j;
 }
 
-// Added for evaluating the performance with f2
-int f2_mf3_gauss_elim(mf3 *M, unsigned int *support) {
-	size_t j, k, n, r, d;
-	n = M->n_cols;
-	k = M->n_rows;
-	int pivots[N] = { 0 }; //(int*) malloc(k * sizeof(int));
-	int nonpivots[N] = { 0 }; //(int*) malloc(n * sizeof(int));
-	for (r = 0, d = 0, j = 0; (j < n) && (r < k); ++j) {
-		if (f2_mf3_gauss_elim_single(M, r, support[j]) == 0) {
-			nonpivots[d] = support[j];
-			d++;
-		} else {
-			pivots[r] = support[j];
-			r++;
-		}
-	}
 
-	memcpy(support, pivots, r * sizeof(int));
-	memcpy(support + r, nonpivots, d * sizeof(int));
-
-	return j;
-}
 
 // Added for M4R (f2 for debugging)
-int f2_m4r_mf3_gauss_elim(mf3 *M, unsigned int k,  unsigned int r_str,  unsigned int c_str) {
+int m4r_mf3_gauss_elim(mf3 *M, unsigned int k,  unsigned int r_str,  unsigned int c_str) {
 	size_t m,n;
 	n = M->n_cols;
 	m = M->n_rows;
@@ -284,7 +227,7 @@ int f2_m4r_mf3_gauss_elim(mf3 *M, unsigned int k,  unsigned int r_str,  unsigned
 		// printf("row: %d\n", r);
 		// printf("col: %d\n", j);
 
-		if (f2_mf3_gauss_elim_single_wind(M, r, r_str, k, j, c_str) == 0) {
+		if (mf3_gauss_elim_single_wind(M, r, r_str, k, j, c_str) == 0) {
 			return j-c_str;
 		}
 		else {
