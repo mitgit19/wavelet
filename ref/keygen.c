@@ -93,8 +93,8 @@ int keygen(wave_sk_t *sk, wave_pk_t *pk) {
 
 	mf3 *Hsec = mf3_copy(H);
 
-	//mf3_gauss_elim(H, sk->perm);
-	 m4r_impl(H);
+	mf3_gauss_elim(H, sk->perm);
+	//m4r_impl(H);
 
 	mf3 *R = mf3_new(N - K, K);
 
