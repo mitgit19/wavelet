@@ -14,6 +14,7 @@
 #include "params.h"
 #include "definitions.h"
 
+#include "m4r.h"
 
 int keygen(wave_sk_t *sk, wave_pk_t *pk);
 
