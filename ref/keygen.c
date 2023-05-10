@@ -66,7 +66,6 @@ mf3* full_parity_check_matrix(mf3 *HU, mf3 *HV, coeff_t *coeff) {
 
 	return Hsec;
 }
-
 int keygen(wave_sk_t *sk, wave_pk_t *pk) {
 
 	uint8_t key_seed = 2;
@@ -94,7 +93,76 @@ int keygen(wave_sk_t *sk, wave_pk_t *pk) {
 	mf3 *Hsec = mf3_copy(H);
 
 	mf3_gauss_elim(H, sk->perm);
-	//m4r_impl(H);
+
+	mf3 *R = mf3_new(N - K, K);
+
+	for (int i = 0; i < N - K; i++) {
+		for (int j = 0; j < K; j++) {
+
+			f3_vector_setcoeff(&R->row[i], j,
+					mf3_coeff(H, i, sk->perm[N - K + j]));
+		}
+	}
+
+	//TODO: recompute it at sign?
+	sk->Sinv = mf3_new(N - K, N - K);
+	for (int i = 0; i < (N - K); i++) {
+		for (int j = 0; j < (N - K); j++) {
+			f3_vector_setcoeff(&sk->Sinv->row[i], j,
+					mf3_coeff(Hsec, i, sk->perm[j]));
+
+		}
+	}
+
+	mf3 *r_t = mf3_transpose(R);
+	mf3 *m_t = mf3_new(r_t->n_rows, r_t->n_cols);
+	for (int a = 0; a < (K - 1) / 2; a++) {
+		f3_vector_add(&r_t->row[2 * a], &r_t->row[(2 * a) + 1],
+				&m_t->row[2 * a]);
+		f3_vector_sub(&r_t->row[2 * a], &r_t->row[2 * a + 1],
+				&m_t->row[2 * a + 1]);
+
+	}
+	f3_vector_neg_vector(&r_t->row[K - 1], &m_t->row[K - 1]);
+
+	*pk = m_t;
+
+	mf3_free(R);
+	mf3_free(r_t);
+	mf3_free(H);
+	mf3_free(Hsec);
+	prng_clear(PRNG);
+
+	return 1;
+}
+
+int keygen_m4r(wave_sk_t *sk, wave_pk_t *pk) {
+
+	uint8_t key_seed = 2;
+	prng_t *PRNG;
+	//randombytes(&key_seed, 1);
+	PRNG = prng_init(key_seed);
+	//randperm(sk->perm, N);
+
+	for(size_t i =  0;i < N; i++)
+		sk->perm[i] = i;
+	sk->HU = mf3_rand(N2 - KU, N2, PRNG);
+	prng_clear(PRNG);
+
+	//randombytes(&key_seed, 1);
+	PRNG = prng_init(key_seed);
+	sk->HV = mf3_rand(N2 - KV, N2, PRNG);
+	prng_clear(PRNG);
+
+	//randombytes(&key_seed, 1);
+	PRNG = prng_init(key_seed);
+	gen_coeffUV(PRNG, &sk->coeff);
+
+	mf3 *H = full_parity_check_matrix(sk->HU, sk->HV, &sk->coeff);
+
+	mf3 *Hsec = mf3_copy(H);
+
+	m4r_impl(H);
 
 	mf3 *R = mf3_new(N - K, K);
 
