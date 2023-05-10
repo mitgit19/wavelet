@@ -18,6 +18,8 @@
 
 int keygen(wave_sk_t *sk, wave_pk_t *pk);
 
+int keygen_m4r(wave_sk_t *sk, wave_pk_t *pk);
+
 void wave_sk_clear(wave_sk_t *sk);
 
 void wave_pk_clear(wave_pk_t pk);
