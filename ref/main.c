@@ -105,8 +105,9 @@ int main(void) {
 	// Checking whether the results match
 	// printf("The results obtained match: %s \n", (mf3_are_equal(H1,H2)) ? "true" : "false");
 
-	printf("------\t Warming up.\t--------\n");
+		printf("------\t Warming up.\t--------\n");
 
+	printf("\nWithout M4R in keygen: \n");
 	clock_t start, end;
 	memset(timekey_f, 0, sizeof(double) * ITERATIONS);
 	memset(time_sign_f, 0, sizeof(double) * ITERATIONS);
@@ -152,7 +153,7 @@ int main(void) {
 		int verify = Nverify(salt, mi, MAXMLEN, a_r0, a_r1, pk);
 		end = clock();
 		time_verify_f[i] = (double) (end - start) * 1000.0 / CLOCKS_PER_SEC;
-		printf("works? %d\n", verify);
+		//printf("works? %d\n", verify);
 
 		wave_pk_clear(pk);
 		wave_sk_clear(&sk);
@@ -166,6 +167,81 @@ int main(void) {
 	double sign_avg = 0;
 	double verify_avg = 0;
 	double keygen_avg = 0;
+	for (int i = 0; i < ITERATIONS; i++) {
+		sign_avg += time_sign_f[i];
+		verify_avg += time_verify_f[i];
+		keygen_avg += timekey_f[i];
+	}
+
+	printf("keygen() MEDIAN %f milli-seconds \n", timekey_f[ITERATIONS / 2]);
+
+	printf("keygen() AVG %f milli-seconds \n", (keygen_avg / ITERATIONS));
+
+	printf("sign() MEDIA %f milli-seconds\n", time_sign_f[ITERATIONS / 2]);
+
+	printf("sign() AVG took %f milli-seconds \n", (sign_avg / ITERATIONS));
+
+	printf("Nverify() MEDIAN %f milli-seconds \n",
+			time_verify_f[ITERATIONS / 2]);
+
+	printf("Nverify() AVG took %f milli-seconds \n", (verify_avg / ITERATIONS));
+
+	printf("\nWith M4R in keygen: \n");
+
+	for (int i = 0; i < ITERATIONS; i++) {
+		wave_pk_t pk;
+		wave_sk_t sk;
+		uint8_t salt[SALT_SIZE] = { 0 };
+
+		f3_vector signature = f3_vector_new(N);
+
+		f3_vector m_hash = f3_vector_new(N - K);
+		uint8_t mi[MAXMLEN] = { 0 };
+
+		start = clock();
+		keygen_m4r(&sk, &pk);
+		end = clock();
+		timekey_f[i] = (double) (end - start) * 1000.0 / CLOCKS_PER_SEC;
+	//	save_matrix(pk, "pk1.bin");
+
+	//	read_matrix(pk, "pk1.bin");
+		f3_vector_zero(&signature);
+		f3_vector_zero(&m_hash);
+		memset(mi, 0, MAXMLEN * sizeof(uint8_t));
+		randombytes(mi, MAXMLEN);
+
+		start = clock();
+		sign(&signature, &m_hash, salt, mi, MAXMLEN, &sk);
+		end = clock();
+		time_sign_f[i] = (double) (end - start) * 1000.0 / CLOCKS_PER_SEC;
+
+		size_t alloc = (1 + ((K - 1)) / WORD_LENGTH);
+		wave_word a_r0[(1 + ((K - 1)) / WORD_LENGTH)] = { 0 };
+		wave_word a_r1[(1 + ((K - 1)) / WORD_LENGTH)] = { 0 };
+
+		memcpy(a_r0, signature.r0 + 45, 88 * sizeof(wave_word));
+		memcpy(a_r1, signature.r1 + 45, 88 * sizeof(wave_word));
+		shift7(a_r0, alloc);
+		shift7(a_r1, alloc);
+
+		start = clock();
+		int verify = Nverify(salt, mi, MAXMLEN, a_r0, a_r1, pk);
+		end = clock();
+		time_verify_f[i] = (double) (end - start) * 1000.0 / CLOCKS_PER_SEC;
+		//printf("works? %d\n", verify);
+
+		wave_pk_clear(pk);
+		wave_sk_clear(&sk);
+		f3_vector_free(&signature);
+		f3_vector_free(&m_hash);
+	}
+
+	bubbleSort(timekey_f, ITERATIONS - 1);
+	bubbleSort(time_verify_f, ITERATIONS - 1);
+	bubbleSort(time_sign_f, ITERATIONS - 1);
+	sign_avg = 0;
+	verify_avg = 0;
+	keygen_avg = 0;
 	for (int i = 0; i < ITERATIONS; i++) {
 		sign_avg += time_sign_f[i];
 		verify_avg += time_verify_f[i];
