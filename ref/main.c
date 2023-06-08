@@ -54,7 +54,7 @@ int main(void) {
 
 	// printf("------\t Testing region for M4R.\t--------\n");
 
-	// Generating random matrices
+	// // Generating random matrices
 	// prng_t *PRNG;
 	// PRNG = prng_init(2);
 	// const size_t mat_nu_rows = 2887;
@@ -65,15 +65,15 @@ int main(void) {
 	// mf3* H1 = mf3_rand(mat_nu_rows, mat_nu_cols, PRNG);
 	// mf3* H2 = mf3_copy(H1);
 
-	// Visualizing the random matrix
+	// // Visualizing the random matrix
 	// // mf3_print(H1);
 
-	// printf("%d\n", H1->n_rows);
-	// printf("%d\n", H1->n_cols);
+	// // printf("%d\n", H1->n_rows);
+	// // printf("%d\n", H1->n_cols);
 
-	// Timing the original Gaussian Elimination
+	// // Timing the original Gaussian Elimination
 
-	// Creating the support vector
+	// // Creating the support vector
 	// unsigned int support[2887] = { 0 };
 	// for (int i = 0; i < mat_nu_rows; ++i)
 	// 	support[i] = i;
@@ -87,10 +87,10 @@ int main(void) {
 	// double time_taken = ((double)t1)/CLOCKS_PER_SEC;
 	// printf("The original Gaussian Elim took %f seconds to execute \n", time_taken);
 
-	// Visualizing the result obtained by the original gaussian elimination
+	// // Visualizing the result obtained by the original gaussian elimination
 	// // mf3_print(H1);
 
-	// Timing the M4R Gaussian Elimination
+	// // Timing the M4R Gaussian Elimination
 	// clock_t t2;
     // t2 = clock();
 
@@ -99,13 +99,18 @@ int main(void) {
 	// time_taken = ((double)t2)/CLOCKS_PER_SEC;
 	// printf("The M4R Gaussian Elim took %f seconds to execute \n", time_taken);
 
-	// Visualizing the result obtained by the M4R gaussian elimination
+	// // Visualizing the result obtained by the M4R gaussian elimination
 	// // mf3_print(H2);
 
-	// Checking whether the results match
+	// // Checking whether the results match
 	// printf("The results obtained match: %s \n", (mf3_are_equal(H1,H2)) ? "true" : "false");
 
-		printf("------\t Warming up.\t--------\n");
+	// // Testing the makeTable function
+	// // mf3* T = mf3_new(two_pow(3), 10);
+	// // make_table(H1,0,0,3,T);
+	// // mf3_print(T);
+
+	printf("------\t Warming up.\t--------\n");
 
 	printf("\nWithout M4R in keygen: \n");
 	clock_t start, end;
@@ -211,7 +216,7 @@ int main(void) {
 		randombytes(mi, MAXMLEN);
 
 		start = clock();
-		sign(&signature, &m_hash, salt, mi, MAXMLEN, &sk);
+		sign_m4r(&signature, &m_hash, salt, mi, MAXMLEN, &sk);
 		end = clock();
 		time_sign_f[i] = (double) (end - start) * 1000.0 / CLOCKS_PER_SEC;
 
@@ -228,7 +233,7 @@ int main(void) {
 		int verify = Nverify(salt, mi, MAXMLEN, a_r0, a_r1, pk);
 		end = clock();
 		time_verify_f[i] = (double) (end - start) * 1000.0 / CLOCKS_PER_SEC;
-		//printf("works? %d\n", verify);
+		// printf("works? %d\n", verify);
 
 		wave_pk_clear(pk);
 		wave_sk_clear(&sk);

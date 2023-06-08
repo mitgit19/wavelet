@@ -95,7 +95,8 @@ int mf3_gauss_elim_single(mf3 *M, size_t r, size_t j) {
 				 M->row[i].r1 = temp;*/
 
 			}
-
+			
+			// swapping the two rows
 			f3_vector temp = M->row[i];
 			M->row[i] = M->row[r];
 			M->row[r] = temp;
@@ -116,9 +117,6 @@ int mf3_gauss_elim_single(mf3 *M, size_t r, size_t j) {
 	return 0;
 }
 
-
-
-
 // Added for M4R (f2 for debugging)
 int mf3_gauss_elim_single_wind(mf3 *M, size_t r, size_t r_str, size_t k, size_t j, size_t c_str) {
 	size_t i;
@@ -126,13 +124,13 @@ int mf3_gauss_elim_single_wind(mf3 *M, size_t r, size_t r_str, size_t k, size_t 
 
 	for (i = r; i < M->n_rows; i++) {
 
-		// If at least 1 pivot has been found (from previous columns) and no pivot can be found within the region r_str+k return 0 
+		// If the pivot cannot be found within the k rows region (improbable but still possible edge case for large k values)
 		if  ((i >= (r_str + k)) && (j > c_str)) {
-			//for (size_t l = r_str; l < r; l++) {
-			//	a = f3_vector_coeff(&M->row[i], l - r_str + c_str);
-			//	if (a == 1)
-			//		f2_vector_sum_inplace(&M->row[i], &M->row[l]);
-			//}
+			// for (size_t l = r_str; l < r; l++) {
+			// 	a = f3_vector_coeff(&M->row[i], l - r_str + c_str);
+			// 	if (a == 1)
+			// 		f2_vector_sum_inplace(&M->row[i], &M->row[l]);
+			// }
 			return 0;
 		}
 
@@ -161,22 +159,19 @@ int mf3_gauss_elim_single_wind(mf3 *M, size_t r, size_t r_str, size_t k, size_t 
 			}
 
 			for (i = r_str; i < lower_bound; i++) {
-
 				if (i != r) {
 					a = f3_vector_coeff(&M->row[i], j);
-					if (a == 1)
-						f3_vector_sub_inplace(&M->row[i], &M->row[r]);
-					else if (a == 2)
-						f3_vector_sum_inplace(&M->row[i], &M->row[r]);
+					if (a == 1) {
+						f3_vector_sub_inplace(&M->row[i], &M->row[r]);}
+					else if (a == 2) {
+						f3_vector_sum_inplace(&M->row[i], &M->row[r]);}
 				}
 			}
-
 			return 1;
 		}
 	}
 	return 0;
 }
-
 
 /***
  support[] is a permutation of {0,..,n-1}.
@@ -209,8 +204,6 @@ int mf3_gauss_elim(mf3 *M, unsigned int *support) {
 
 	return j;
 }
-
-
 
 // Added for M4R (f2 for debugging)
 int m4r_mf3_gauss_elim(mf3 *M, unsigned int k,  unsigned int r_str,  unsigned int c_str) {

@@ -66,6 +66,7 @@ mf3* full_parity_check_matrix(mf3 *HU, mf3 *HV, coeff_t *coeff) {
 
 	return Hsec;
 }
+
 int keygen(wave_sk_t *sk, wave_pk_t *pk) {
 
 	uint8_t key_seed = 2;
@@ -162,7 +163,7 @@ int keygen_m4r(wave_sk_t *sk, wave_pk_t *pk) {
 
 	mf3 *Hsec = mf3_copy(H);
 
-	m4r_impl(H);
+	m4r_impl(H, sk->perm, 6);
 
 	mf3 *R = mf3_new(N - K, K);
 

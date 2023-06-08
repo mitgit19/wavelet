@@ -138,7 +138,13 @@ Input: k - an integer k>0. For our case this will be deduced automatically.
 Result: A in reduced row echelon form
 */
 
-void m4r_impl(mf3 *A) {
+int m4r_impl(mf3 *A, unsigned int *support, size_t k) {
+
+	int pivots[N] = { 0 }; //(int*) malloc(k * sizeof(int));
+	int nonpivots[N] = { 0 }; //(int*) malloc(n * sizeof(int));
+
+	int nu_pivs = 0;
+	int nu_non_pivs = 0;
 
 	// Initialising both r,c to 0
 	size_t r = 0;
@@ -150,9 +156,9 @@ void m4r_impl(mf3 *A) {
 
 	// Finding k based on n_columns (since n>m)
 	// size_t k = m4r_opt_k(m);
-	size_t k = 6;
+	// size_t k = 6;
 
-	while(c < n) {
+	while((c < n) && (r <= (m - 1))) {
 
 		// If out of boundary (nu of columns)
 		if (c+k > n) {
@@ -164,6 +170,12 @@ void m4r_impl(mf3 *A) {
 
 		// If pivots found
 		if (k_bar > 0) {
+
+			// Storing the pivot positions
+			for (size_t j = c; j < c+k_bar; j++) {
+				pivots[nu_pivs] = j;
+				nu_pivs++;
+			}
 
 			// Computing 2^k
 			size_t two_pow_k = two_pow(k_bar);
@@ -184,6 +196,11 @@ void m4r_impl(mf3 *A) {
 
 		}
 
+		else {
+			nonpivots[nu_non_pivs] = c;
+			nu_non_pivs++;
+		}
+
 		// Updating r,c
 		r += k_bar;
 		c += k_bar;
@@ -196,4 +213,16 @@ void m4r_impl(mf3 *A) {
 			c +=1;
 		}
 	}
+
+	int pivs_tried = nu_pivs + nu_non_pivs;
+
+	for (size_t j = c; j < n; j++) {
+		nonpivots[nu_non_pivs] = j;
+		nu_non_pivs++;
+	}
+	
+	memcpy(support, pivots, nu_pivs * sizeof(int));
+	memcpy(support + nu_pivs, nonpivots, nu_non_pivs * sizeof(int));
+
+	return pivs_tried;
 }

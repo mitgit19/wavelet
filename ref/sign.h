@@ -23,6 +23,8 @@
 
 #include "hash.h"
 
+#include "m4r.h"
+
 // v a vector of size 2 * length
 // number of non-zero pairs (v[i], v[i+length])
 int nz_pairs(uint8_t *v, int length);
@@ -44,5 +46,15 @@ void decodeU(uint8_t *e, uint8_t *sU, uint8_t *eV, mf3 *HU, wave_sk_t *sk,
 
 void sign(f3_vector *signature, f3_vector *message_hash, uint8_t *salt,
 		const uint8_t *message, const size_t mlen, wave_sk_t *sk);
+
+void sign_m4r(f3_vector *signature, f3_vector *message_hash, uint8_t *salt,
+		const uint8_t *message, const size_t mlen, wave_sk_t *sk);
+
+void decodeV_m4r(uint8_t *eV, uint8_t *sV, mf3 *HV, prng_t *PRNG);
+//int8_t* decodeV(int8_t *sV, mf3_t HV, prng_t PRNG);
+
+void decodeU_m4r(uint8_t *e, uint8_t *sU, uint8_t *eV, mf3 *HU, wave_sk_t *sk,
+		prng_t *PRNG);
+//int8_t* decodeU(int8_t *sU, int8_t *eV, mf3_t HU, wave_sk_t sk, prng_t PRNG);
 
 #endif /* SRC_WAVE_SIGN_H_ */

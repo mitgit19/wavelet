@@ -32,4 +32,4 @@ Input: k - an integer k>0. For our case this will be deduced automatically.
 Result: A in reduced row echelon form
 */
 
-void m4r_impl(mf3 *A);
+int m4r_impl(mf3 *A, unsigned int *support, size_t k);

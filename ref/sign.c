@@ -189,3 +189,93 @@ void sign(f3_vector *signature, f3_vector *message_hash, uint8_t *salt, const ui
 	sign_wave(signature, message_hash, sk, PRNG);
 	prng_clear(PRNG);
 }
+
+void sign_wave_m4r(f3_vector *e, f3_vector *s, wave_sk_t *sk, prng_t *PRNG) {
+	uint8_t eV[N2 + 1] = { 0 };
+	uint8_t eprime[N2 * 2] = { 0 };
+	uint8_t sprime[N - K] = { 0 };
+	mf3_mv_mul(sk->Sinv, s, sprime);
+	decodeV_m4r(eV, sprime + (N2 - KU), sk->HV, PRNG);
+	decodeU(eprime, sprime, eV, sk->HU, sk, PRNG);
+
+	for (int i = 0; i < N; ++i) {
+		f3_vector_setcoeff(e, i, eprime[sk->perm[i]]);
+	}
+
+}
+
+void sign_m4r(f3_vector *signature, f3_vector *message_hash, uint8_t *salt, const uint8_t *message,
+		const size_t mlen, wave_sk_t *sk) {
+
+	randombytes(salt, SALT_SIZE);
+	uint8_t seed;
+	randombytes(&seed, 1);
+	hash_message(message_hash, message, mlen, salt, SALT_SIZE);
+	prng_t *PRNG = prng_init(seed);
+	sign_wave_m4r(signature, message_hash, sk, PRNG);
+	prng_clear(PRNG);
+}
+
+
+void decodeV_m4r(uint8_t *eV, uint8_t *sV, mf3 *HV, prng_t *PRNG) {
+	int i, t;
+	uint8_t y[N - K] = { 0 };
+	unsigned int support[N2] = { 0 };
+	for (int i = 0; i < N2; ++i)
+		support[i] = i;
+	mf3 *H = mf3_augment(HV, sV);
+	//save_matrix(H);
+	//uint8_t eV[N2+1];
+	//uint8_t *eV = (uint8_t*) malloc((N2 + 1) * sizeof(uint8_t));
+	eV[N2] = f3_neg(1); // -1
+	// do {
+	// 	rand_shuffle(support, N2, N2 - KV + D, PRNG);
+	// } while (mf3_gauss_elim(H, support) > N2 - KV + D);
+
+	// rand_shuffle(support, N2, N2 - KV + D, PRNG);
+
+	if (m4r_impl(H, support, 5) <= N2 - KV + D) {
+		rand_shuffle_wind(support, D, N2 - KV, N2 - KV + D, PRNG);
+		rand_shuffle_wind(support, N2 - (N2 - KV) - D, N2 - KV + D, N2, PRNG);
+	}
+	else {
+		do {
+			rand_shuffle(support, N2, N2 - KV + D, PRNG);
+		} while (mf3_gauss_elim(H, support) > N2 - KV + D);
+	}
+
+
+	//save_matrix(H);
+	/*
+	 mf3_gauss_elim() returns the number of pivots that were tried
+	 before the Guassian elimination ended.
+
+	 If d is large enough (the fully proven variant of Wave) the
+	 above condition succeeds with probability overwhelmingly close to 1.
+
+	 If d = 0 (the 'no gap' variant) we repeat the Gaussian
+	 elimination until no pivot fails.
+	 */
+	while (1) {
+		t = pickV(PRNG);
+		for (i = 0; i < N2 - KV; ++i)
+			eV[support[i]] = 0;
+		for (; i < N2 - KV + D; ++i)
+			eV[support[i]] = f3_rand(PRNG);
+		for (; i < N2 - t; ++i)
+			eV[support[i]] = 0;
+		for (; i < N2; ++i)
+			eV[support[i]] = f3_randnonzero(PRNG);
+		mf3_ma_mul(H, eV, y);
+		for (i = 0; i < N2 - KV; ++i)
+			eV[support[i]] = f3_neg(y[i]);
+		//free(y);
+		if (acceptV(f3_array_weight(eV, N2), PRNG))
+			break;
+		rejV++; //updating the rejection
+
+	}
+	//free(support);
+	mf3_free(H);
+	//return eV;
+}

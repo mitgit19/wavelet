@@ -33,4 +33,6 @@ void randperm(unsigned int *a, int n);
 
 void rand_shuffle(unsigned int *a, int n, int t, prng_t *PRNG);
 
+void rand_shuffle_wind(unsigned int *a, int n, int t1, int t2, prng_t *PRNG);
+
 #endif /* PRNG_H_ */

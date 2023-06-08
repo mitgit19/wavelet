@@ -28,7 +28,6 @@ void mf3_times_vector(const mf3 *M, const f3_vector *v, f3_vector *res);
 
 int mf3_gauss_elim(mf3 *M, unsigned int *support);
 
-
 // Added for M4R (f2 for debugging)
 int m4r_mf3_gauss_elim(mf3 *M, unsigned int k,  unsigned int r_str,  unsigned int c_str);
 

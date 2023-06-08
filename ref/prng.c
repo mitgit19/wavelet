@@ -151,3 +151,19 @@ void rand_shuffle(unsigned int *a, int n, int t, prng_t *PRNG) {
 		a[i] = c;
 	}
 }
+
+/* randomly shuffle the array a[] of length n so that the specified [t1,t2)
+ coordinates is a random uniform subset of size t1-t2 of the array
+ values */
+void rand_shuffle_wind(unsigned int *a, int n, int t1, int t2, prng_t *PRNG) {
+	int i, r, c;
+
+	for (i = t1; i < t2; i++) {
+		r = t1 + rnd_short(n, PRNG); /* i <= r < n uniform */
+		// printf("%d \n", i);
+		c = a[r];
+		// printf(("llo %d",i));
+		a[r] = a[i];
+		a[i] = c;
+	}
+}
