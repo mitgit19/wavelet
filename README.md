@@ -1,4 +1,4 @@
-##This repository is based on waveletc/wavelet repository##
+## This repository is based on waveletc/wavelet repository ##
 
 
 ## WAVELET ##
